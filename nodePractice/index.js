@@ -1,37 +1,19 @@
-const http= require('http');
-const fs=require('fs');
-const path = require('path'); 
+const express= require('express');
+const http = require('http');
 
-const server= http.createServer((req,res)=>{
-console.log(req.url);
-if(req.url=='/') fileUrl= '/index.html'
-else fileUrl=req.url;
-
-filePath= path.resolve('./public'+fileUrl);
-
-fs.exists(filePath,(exists)=>{
-if(!exists)
-{    res.statusCode=404;
-    res.setHeader('Content-Type','text/html');
-   
-    res.end('<html><body><h1>The file does not exists</h1></body></html>');
-    return;
-}
-else
-{
-    res.statusCode=200;
-    res.setHeader('Content-Type','text/html');
-    fs.createReadStream(filePath).pipe(res);
-
-}
-})
+const app=express();
 
 
+app.use((req,res,next)=>{
 
+console.log(req.header());
+res.end('<html><body><h1>This is Express Server</h1></body></html>');
+});
 
-})
-
+const server = http.createServer(app);
 
 server.listen(3000,'localhost',()=>{
-    console.log("Server Started at port: 3000");
-});
+
+    console.log('Express Server started at localhost port 3000');
+})
+

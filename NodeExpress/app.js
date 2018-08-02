@@ -3,7 +3,7 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-
+const mongoose = require('mongoose');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 
@@ -12,6 +12,20 @@ var promoRouter= require('./routes/promoRouter');
 var leaderRouter=require('./routes/leaderRouter');
 
 var app = express();
+
+const url = 'mongodb://localhost:27017/mysampledb';
+
+const connect = mongoose.connect(url, { useNewUrlParser: true });
+
+connect.then((db)=>{
+
+    console.log('Connected to database');
+},(err)=>{
+    console.log(err);
+
+}).catch((err)=>{
+    console.log(err);
+})
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -26,8 +40,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/dishes',dishRouter);
-app.use('/leaders',leaderRouter);
-app.use('/promotions',promoRouter);
+//app.use('/leaders',leaderRouter);
+//app.use('/promotions',promoRouter);
 
 
 // catch 404 and forward to error handler

@@ -27,6 +27,39 @@ connect.then((db)=>{
     console.log(err);
 })
 
+var auth = function(req,res,next){
+  var authHeader=  req.headers.authorization;
+
+if(authHeader)
+    {
+        console.log(new Buffer(authHeader.split(' ')[1],'base64').toString);
+        var usrDetails = new Buffer(authHeader.split(' ')[1],'base64').toString().split(':');
+        var usrName = usrDetails[0];
+        var pswd = usrDetails[1];
+        
+        if(usrName==='admin' && pswd === '1234')
+            {
+                next();
+            }
+        else
+        {
+            var err = new Error('You are not authenticated!');
+            res.setHeader('WWW-Authenticate', 'Basic');
+            err.status = 401;
+            next(err);
+        }
+    }
+ else{
+    var err = new Error('You are not authenticated!');
+    res.setHeader('WWW-Authenticate', 'Basic');
+    err.status = 401;
+    next(err);
+ }   
+
+
+}
+
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
@@ -35,6 +68,9 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+//add a middleware for authentiation
+app.use(auth);
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);

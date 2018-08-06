@@ -29,8 +29,8 @@ connect.then((db)=>{
 
 var auth = function(req,res,next){
   var authHeader=  req.headers.authorization;
-
-if(authHeader)
+if(!req.signedCookies.user)
+{if(authHeader)
     {
         console.log(new Buffer(authHeader.split(' ')[1],'base64').toString);
         var usrDetails = new Buffer(authHeader.split(' ')[1],'base64').toString().split(':');
@@ -39,6 +39,8 @@ if(authHeader)
         
         if(usrName==='admin' && pswd === '1234')
             {
+                
+                res.cookie('user','admin',{signed : true});
                 next();
             }
         else
@@ -55,7 +57,20 @@ if(authHeader)
     err.status = 401;
     next(err);
  }   
+}
+else{
+    if(req.signedCookies.user='admin')
+        {
+            next();
 
+        }
+    else {
+        var err = new Error('You are not authenticated!');
+        
+        err.status = 401;
+        next(err);
+    }
+}
 
 }
 
@@ -67,7 +82,7 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+app.use(cookieParser('12345-67890-09876-54321'));
 //add a middleware for authentiation
 app.use(auth);
 

@@ -6,16 +6,16 @@ var logger = require('morgan');
 const mongoose = require('mongoose');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
-
+var expressSession = require('express-session');
 var dishRouter = require('./routes/dishRouter');
 var promoRouter= require('./routes/promoRouter');
 var leaderRouter=require('./routes/leaderRouter');
-
+var sesionFileStore = require('session-file-store')(expressSession);
 var app = express();
 
 const url = 'mongodb://localhost:27017/mysampledb';
 
-const connect = mongoose.connect(url, { useNewUrlParser: true });
+const connect = mongoose.connect(url, { useNewUrlParser: true ,  autoIndex: false });
 
 connect.then((db)=>{
 
@@ -28,50 +28,23 @@ connect.then((db)=>{
 })
 
 var auth = function(req,res,next){
-  var authHeader=  req.headers.authorization;
-if(!req.signedCookies.user)
-{if(authHeader)
-    {
-        console.log(new Buffer(authHeader.split(' ')[1],'base64').toString);
-        var usrDetails = new Buffer(authHeader.split(' ')[1],'base64').toString().split(':');
-        var usrName = usrDetails[0];
-        var pswd = usrDetails[1];
-        
-        if(usrName==='admin' && pswd === '1234')
-            {
-                
-                res.cookie('user','admin',{signed : true});
-                next();
-            }
-        else
-        {
-            var err = new Error('You are not authenticated!');
-            res.setHeader('WWW-Authenticate', 'Basic');
-            err.status = 401;
-            next(err);
-        }
-    }
- else{
-    var err = new Error('You are not authenticated!');
-    res.setHeader('WWW-Authenticate', 'Basic');
-    err.status = 401;
-    next(err);
- }   
-}
-else{
-    if(req.signedCookies.user='admin')
-        {
-            next();
+ console.log(req.session);
 
-        }
+  if(!req.session.user) {
+      var err = new Error('You are not authenticated!');
+      err.status = 403;
+      return next(err);
+  }
+  else {
+    if (req.session.user === 'authenticated') {
+      next();
+    }
     else {
-        var err = new Error('You are not authenticated!');
-        
-        err.status = 401;
-        next(err);
+      var err = new Error('You are not authenticated!');
+      err.status = 403;
+      return next(err);
     }
-}
-
+  }
 }
 
 
@@ -82,14 +55,23 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser('12345-67890-09876-54321'));
+//app.use(cookieParser('12345-67890-09876-54321'));
 //add a middleware for authentiation
-app.use(auth);
+app.use(expressSession({
+    name : 'session-id',
+    secret: '12345-67890-09876-54321',
+    saveUninitialized: false,
+  resave: false,
+    store: new sesionFileStore()
+}));
+
 
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+
+app.use(auth);
 app.use('/dishes',dishRouter);
 app.use('/leaders',leaderRouter);
 app.use('/promotions',promoRouter);

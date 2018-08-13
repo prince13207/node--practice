@@ -85,4 +85,24 @@ usersRouter.post('/login',function(req,res,next){
 
 );
 
+
+
+usersRouter.post('/logout',function(req,res,next)
+{
+  if(!req.session.user)
+  {
+    err = new Error('User not logged in');
+    next(err);
+  }
+
+  else{
+
+    req.session.destroy();
+    res.clearCookie('session-id');
+    res.redirect('/');
+  }
+
+
+
+});
 module.exports = usersRouter;
